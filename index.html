@@ -1,0 +1,490 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Diagnóstico inicial — Consultoria</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Serif:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --paper:#F2F4F3; --surface:#FFFFFF; --ink:#14211F; --muted:#5C6B68;
+  --accent:#1F5F5B; --accent-soft:#E3ECEA; --rule:#D6DDDA; --flag:#8A5A2B;
+  --serif:'IBM Plex Serif',Georgia,serif;
+  --sans:'IBM Plex Sans',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
+  --mono:'IBM Plex Mono',ui-monospace,'SF Mono',Menlo,monospace;
+}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--sans);font-size:16px;line-height:1.6;padding-bottom:80px}
+
+/* medidor de progresso */
+#gauge{position:fixed;top:0;left:0;right:0;height:44px;background:rgba(242,244,243,.94);backdrop-filter:blur(8px);border-bottom:1px solid var(--rule);z-index:50;display:flex;align-items:center;gap:14px;padding:0 20px}
+#gauge .track{flex:1;height:2px;background:var(--rule);position:relative;overflow:hidden}
+#gauge .fill{position:absolute;inset:0 auto 0 0;width:0;background:var(--accent);transition:width .35s cubic-bezier(.2,.8,.3,1)}
+#gauge .num{font-family:var(--mono);font-size:12px;letter-spacing:.04em;color:var(--muted);white-space:nowrap;font-variant-numeric:tabular-nums}
+
+.wrap{max-width:680px;margin:0 auto;padding:88px 20px 0}
+
+/* tipografia */
+h1{font-family:var(--serif);font-weight:600;font-size:30px;line-height:1.2;letter-spacing:-.015em;margin:0 0 6px}
+h2{font-family:var(--serif);font-weight:600;font-size:21px;line-height:1.25;margin:0 0 4px}
+.eyebrow{font-family:var(--mono);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--accent);margin:0 0 10px}
+p{margin:0 0 14px}
+.lede{font-size:17px;color:var(--muted)}
+.note{font-size:14px;color:var(--muted)}
+
+section{background:var(--surface);border:1px solid var(--rule);padding:30px 26px;margin:0 0 20px}
+section.intro{background:transparent;border:0;padding:0 0 8px}
+.sechead{border-bottom:1px solid var(--rule);padding-bottom:14px;margin-bottom:22px}
+
+label.q{display:block;margin:0 0 26px}
+label.q .qt{display:block;font-weight:500;margin-bottom:4px}
+label.q .qh{display:block;font-size:14px;color:var(--muted);margin-bottom:10px}
+input[type=text],input[type=email],textarea,select{width:100%;font:inherit;font-size:15px;color:var(--ink);background:var(--paper);border:1px solid var(--rule);padding:11px 12px;border-radius:0}
+textarea{min-height:150px;resize:vertical;line-height:1.65}
+input:focus,textarea:focus,select:focus{outline:2px solid var(--accent);outline-offset:1px;background:var(--surface)}
+
+/* itens do inventário */
+.block{margin:0 0 34px}
+.blockmark{font-family:var(--mono);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);border-bottom:1px solid var(--rule);padding-bottom:7px;margin-bottom:20px}
+fieldset.item{border:0;margin:0;padding:13px 0 15px 14px;border-left:2px solid transparent;transition:border-color .25s ease,background .25s ease}
+fieldset.item.done{border-left-color:var(--accent)}
+fieldset.item legend{padding:0;display:block;width:100%}
+.itemrow{display:flex;gap:12px;align-items:baseline;margin-bottom:12px}
+.itemnum{font-family:var(--mono);font-size:12px;color:var(--muted);min-width:26px;font-variant-numeric:tabular-nums;padding-top:2px}
+.itemtext{font-size:16px;line-height:1.45}
+
+/* trilha calibrada — elemento assinatura */
+.scale{display:flex;align-items:center;gap:0;position:relative;padding:0 2px}
+.scale::before{content:"";position:absolute;left:19px;right:19px;top:50%;height:1px;background:var(--rule)}
+.stop{position:relative;flex:1;display:flex;justify-content:center}
+.stop input{position:absolute;opacity:0;width:38px;height:38px;margin:0;cursor:pointer}
+.dot{width:15px;height:15px;border-radius:50%;background:var(--paper);border:1.5px solid var(--rule);position:relative;z-index:1;transition:transform .18s cubic-bezier(.34,1.4,.5,1),background .18s ease,border-color .18s ease}
+.stop input:hover+.dot{border-color:var(--accent)}
+.stop input:focus-visible+.dot{outline:2px solid var(--accent);outline-offset:3px}
+.stop input:checked+.dot{background:var(--accent);border-color:var(--accent);transform:scale(1.3);box-shadow:0 0 0 4px var(--accent-soft)}
+.blockends{display:flex;justify-content:space-between;font-size:11px;color:var(--muted);padding:0 2px 14px;font-family:var(--mono);letter-spacing:.02em}
+.blockends span:last-child{text-align:right}
+
+/* rodapé de ação */
+.actions{padding:6px 0 26px}
+button{font:inherit;font-weight:500;font-size:16px;background:var(--accent);color:#fff;border:0;padding:15px 26px;cursor:pointer;width:100%;transition:opacity .2s}
+button:hover{opacity:.9}
+button:disabled{background:var(--rule);color:var(--muted);cursor:not-allowed}
+button.ghost{background:transparent;color:var(--accent);border:1px solid var(--accent);margin-top:10px}
+
+#pending{background:#FBF6EE;border:1px solid #E6D5BC;padding:14px 16px;margin-bottom:14px;font-size:14px;display:none}
+#pending a{color:var(--flag);cursor:pointer;text-decoration:underline;margin-right:10px;font-family:var(--mono);font-size:13px}
+
+.status{padding:13px 15px;margin-bottom:16px;font-size:14px;border:1px solid var(--rule);background:var(--paper)}
+.status.ok{background:var(--accent-soft);border-color:var(--accent);color:var(--accent)}
+.status.fail,.status.manual{background:#FBF6EE;border-color:#E6D5BC;color:var(--flag)}
+.status.sending{color:var(--muted)}
+#result{display:none}
+#out{width:100%;min-height:340px;font-family:var(--mono);font-size:12px;line-height:1.5;white-space:pre;overflow-x:auto}
+
+.consent{display:flex;gap:11px;align-items:flex-start;font-size:14px;color:var(--muted);margin-top:6px}
+.consent input{margin-top:4px;width:17px;height:17px;accent-color:var(--accent);flex-shrink:0}
+
+.saved{font-family:var(--mono);font-size:11px;color:var(--muted);text-align:center;padding:6px 0 20px}
+
+@media(max-width:560px){
+  .wrap{padding-top:78px}
+  section{padding:24px 18px}
+  h1{font-size:25px}
+  .itemtext{font-size:15px}
+  .dot{width:19px;height:19px}
+}
+@media(prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+</style>
+</head>
+<body>
+
+<div id="gauge">
+  <span class="num" id="gnum">0 / 120</span>
+  <div class="track"><div class="fill" id="gfill"></div></div>
+  <span class="num" id="gpct">0%</span>
+</div>
+
+<div class="wrap">
+
+<section class="intro">
+  <p class="eyebrow">Diagnóstico inicial</p>
+  <h1>Antes de construirmos qualquer estratégia</h1>
+  <p class="lede">Este material tem duas partes: algumas perguntas abertas sobre sua trajetória e o que você sabe fazer, e um inventário de 120 afirmações sobre como você funciona.</p>
+  <p class="note">Leva de 25 a 40 minutos. Suas respostas ficam salvas neste navegador enquanto você preenche, então dá para parar e voltar depois — desde que seja no mesmo aparelho.</p>
+  <p class="note">Não existe resposta certa. O inventário não mede qualidade nem capacidade: ele mapeia onde cada estratégia custa mais caro para você. Responder pelo que você gostaria de ser, em vez de como você é, produz um plano que não vai funcionar.</p>
+</section>
+
+<section>
+  <div class="sechead"><p class="eyebrow">Parte 1 · 4 campos</p><h2>Identificação</h2></div>
+  <label class="q"><span class="qt">Nome completo</span><input type="text" id="nome" autocomplete="name"></label>
+  <label class="q"><span class="qt">E-mail</span><input type="email" id="email" autocomplete="email"></label>
+  <label class="q"><span class="qt">Profissão e formação</span><input type="text" id="prof"></label>
+  <label class="q"><span class="qt">Há quanto tempo você atua nessa área?</span><input type="text" id="tempo"></label>
+</section>
+
+<section>
+  <div class="sechead"><p class="eyebrow">Parte 2 · pergunta longa</p><h2>Sua história</h2></div>
+  <label class="q">
+    <span class="qt">Conte sua história em ordem cronológica, da infância até hoje.</span>
+    <span class="qh">Escreva como uma linha do tempo, com o máximo de detalhe que conseguir lembrar. Destaque os acontecimentos que você considera mais importantes — inclusive os que não parecem ter relação com trabalho. Não se preocupe em organizar ou resumir: escreva bruto. A seleção do que é estratégico é o meu trabalho, não o seu.</span>
+    <textarea id="historia" style="min-height:280px"></textarea>
+  </label>
+</section>
+
+<section>
+  <div class="sechead"><p class="eyebrow">Parte 3 · pergunta longa</p><h2>Suas expertises</h2></div>
+  <label class="q">
+    <span class="qt">Descreva tudo que você sabe fazer na prática.</span>
+    <span class="qh">Formações técnicas e acadêmicas entram, mas não são o foco. O que mais interessa são as soluções que você aprendeu ao longo da vida e que já estão tão automáticas em você que talvez nem pareçam habilidade.</span>
+    <textarea id="expertise" style="min-height:220px"></textarea>
+  </label>
+  <label class="q">
+    <span class="qt">Três perguntas para ajudar a enxergar o que é automático</span>
+    <span class="qh">O que as pessoas sempre te pedem? O que você resolve em cinco minutos e os outros levam horas? O que você faz de graça sem perceber que está trabalhando?</span>
+    <textarea id="tacito" style="min-height:140px"></textarea>
+  </label>
+</section>
+
+<section>
+  <div class="sechead"><p class="eyebrow">Parte 4 · 10 campos</p><h2>Contexto</h2></div>
+
+  <label class="q"><span class="qt">Quantas horas por semana você tem de fato para o negócio?</span><span class="qh">Não em teoria — de fato.</span><input type="text" id="horas"></label>
+  <label class="q"><span class="qt">Existe emprego, filho pequeno, cuidado com outra pessoa ou condição de saúde ocupando parte da sua semana?</span><textarea id="restricao" style="min-height:90px"></textarea></label>
+  <label class="q"><span class="qt">Qual seu faturamento atual e há quanto tempo está nesse patamar?</span><input type="text" id="fat"></label>
+  <label class="q"><span class="qt">Qual o tamanho da sua audiência hoje, e o quanto ela interage?</span><input type="text" id="aud"></label>
+
+  <label class="q"><span class="qt">O que você já começou e não sustentou? Em que semana parou?</span><span class="qh">Pode ser mais de uma coisa. Seja específica com o tempo.</span><textarea id="abandono" style="min-height:120px"></textarea></label>
+  <label class="q"><span class="qt">O que você adia repetidamente sem conseguir explicar por quê?</span><textarea id="adia" style="min-height:90px"></textarea></label>
+  <label class="q"><span class="qt">Que parte do seu processo comercial você sempre deixa para depois?</span><textarea id="comercial" style="min-height:90px"></textarea></label>
+
+  <label class="q"><span class="qt">Quando foi a última vez que você deu desconto sem que pedissem? Com que frequência isso acontece?</span><textarea id="desconto" style="min-height:90px"></textarea></label>
+  <label class="q"><span class="qt">Você tem contrato escrito com seus clientes? Ele tem data de término?</span><input type="text" id="contrato"></label>
+  <label class="q"><span class="qt">O que te esvazia mesmo quando dá certo? E o que você faz sem perceber que está trabalhando?</span><textarea id="energia" style="min-height:120px"></textarea></label>
+
+  <label class="q">
+    <span class="qt">Você está passando por um período atípico?</span>
+    <span class="qh">Luto, mudança, adoecimento, separação, crise financeira aguda. Isso não te desqualifica para nada — mas muda como eu leio suas respostas, então preciso saber.</span>
+    <select id="estado">
+      <option value="">Selecione</option>
+      <option value="Não">Não</option>
+      <option value="Sim">Sim</option>
+    </select>
+  </label>
+  <label class="q" id="estadodetalhe" style="display:none"><span class="qt">Se sim, me conte brevemente.</span><textarea id="estadotxt" style="min-height:90px"></textarea></label>
+</section>
+
+<section>
+  <div class="sechead">
+    <p class="eyebrow">Parte 5 · 120 afirmações</p>
+    <h2>Inventário</h2>
+  </div>
+  <p class="note" style="margin-bottom:6px">Marque o quanto cada afirmação descreve você. Responda rápido, na primeira impressão — pensar demais em cada uma piora o resultado.</p>
+  <p class="note" style="margin-bottom:26px">A escala vai de <strong>discordo totalmente</strong>, à esquerda, até <strong>concordo totalmente</strong>, à direita. O ponto do meio é neutro.</p>
+  <div id="items"></div>
+</section>
+
+<div class="actions">
+  <div id="pending"></div>
+  <button id="gen" disabled>Gerar minhas respostas</button>
+  <label class="consent">
+    <input type="checkbox" id="consent">
+    <span>Autorizo o envio das minhas respostas para minha consultora e o uso delas na construção da minha estratégia de negócio. Entendo que este inventário é uma ferramenta de perfil comportamental aplicada a decisões de negócio, e que não constitui avaliação psicológica nem diagnóstico clínico.</span>
+  </label>
+</div>
+
+<section id="result">
+  <div class="sechead"><p class="eyebrow">Pronto</p><h2>Suas respostas</h2></div>
+  <div id="sendstatus" class="status" style="display:none"></div>
+  <p class="note">Se quiser guardar uma cópia, baixe o arquivo abaixo.</p>
+  <button id="dl">Baixar arquivo</button>
+  <button class="ghost" id="cp">Copiar tudo</button>
+  <textarea id="out" readonly style="margin-top:16px"></textarea>
+</section>
+
+<p class="saved" id="savemsg"></p>
+
+</div>
+
+<script>
+const ENDPOINT = 'https://script.google.com/macros/s/AKfycbzJkinZ5fGLQ6rissboWpqEfO_Ol14CecB_Fu9MPJzfVkvzccL-banGLLX8jsAxyVjo/exec';
+
+const ITEMS = [[1,"Eu frequentemente imagino novas possibilidades para minha vida.","Abertura","Fantasia",0],[2,"Gosto de pensar sobre conceitos abstratos.","Abertura","Fantasia",0],[3,"Tenho uma imaginação ativa.","Abertura","Fantasia",0],[4,"Raramente me perco em meus pensamentos.","Abertura","Fantasia",1],[5,"Eu gosto de apreciar arte.","Abertura","Estética",0],[6,"Música é uma parte importante da minha vida.","Abertura","Estética",0],[7,"Desfruto de atividades culturais.","Abertura","Estética",0],[8,"Não tenho interesse em aprender sobre diferentes formas de arte.","Abertura","Estética",1],[9,"Aprecio a beleza em minha vida cotidiana.","Abertura","Sentimentos",0],[10,"A natureza me inspira.","Abertura","Sentimentos",0],[11,"Presto atenção aos detalhes estéticos.","Abertura","Sentimentos",0],[12,"Não noto a beleza ao meu redor.","Abertura","Sentimentos",1],[13,"Muitas vezes penso em soluções criativas para problemas.","Abertura","Ideias",0],[14,"Sonho acordada frequentemente.","Abertura","Ideias",0],[15,"Tenho muitas ideias criativas.","Abertura","Ideias",0],[16,"Não gosto de fantasiar sobre diferentes vidas que poderia viver.","Abertura","Ideias",1],[17,"Gosto de ler livros desafiadores.","Abertura","Ações Variadas",0],[18,"Gosto de mudar minha rotina.","Abertura","Ações Variadas",0],[19,"Tenho curiosidade sobre diferentes assuntos.","Abertura","Ações Variadas",0],[20,"Não gosto de aprender novas coisas.","Abertura","Ações Variadas",1],[21,"Costumo questionar velhas verdades da sociedade.","Abertura","Valores",0],[22,"Sinto-me confortável mudando de ideia.","Abertura","Valores",0],[23,"Acredito que é desafiando o status quo que evoluímos como pessoas e sociedade.","Abertura","Valores",0],[24,"Sou resistente à novas ideias e abordagens.","Abertura","Valores",1],[25,"Sinto-me capaz de lidar com a maioria dos problemas que surgem na vida.","Conscienciosidade","Competência",0],[26,"Eu me considero uma pessoa eficiente.","Conscienciosidade","Competência",0],[27,"Acredito que sou bastante competente.","Conscienciosidade","Competência",0],[28,"Não confio nas minhas habilidades.","Conscienciosidade","Competência",1],[29,"Eu gosto de manter tudo em ordem.","Conscienciosidade","Ordem",0],[30,"Gosto de planejar minhas atividades.","Conscienciosidade","Ordem",0],[31,"Organizo bem meu espaço de trabalho.","Conscienciosidade","Ordem",0],[32,"Mantenho minhas coisas desorganizadas.","Conscienciosidade","Ordem",1],[33,"Eu sempre tento fazer o que é certo.","Conscienciosidade","Senso de Dever",0],[34,"Tenho um forte senso de dever.","Conscienciosidade","Senso de Dever",0],[35,"Levo minhas obrigações a sério.","Conscienciosidade","Senso de Dever",0],[36,"Não me esforço para cumprir minhas responsabilidades.","Conscienciosidade","Senso de Dever",1],[37,"Sou motivada a alcançar meus objetivos.","Conscienciosidade","Esforço e Realizações",0],[38,"Trabalho duro para alcançar o sucesso.","Conscienciosidade","Esforço e Realizações",0],[39,"Tenho grandes ambições.","Conscienciosidade","Esforço e Realizações",0],[40,"Não gosto de me desafiar.","Conscienciosidade","Esforço e Realizações",1],[41,"Sou capaz de me controlar quando necessário.","Conscienciosidade","Autodisciplina",0],[42,"Eu mantenho o foco no que preciso fazer.","Conscienciosidade","Autodisciplina",0],[43,"Posso resistir a tentações.","Conscienciosidade","Autodisciplina",0],[44,"Não sigo com meus planos quando é difícil.","Conscienciosidade","Autodisciplina",1],[45,"Penso nas consequências antes de agir.","Conscienciosidade","Ponderação",0],[46,"Sou cuidadosa ao tomar decisões.","Conscienciosidade","Ponderação",0],[47,"Evito correr riscos desnecessários.","Conscienciosidade","Ponderação",0],[48,"Agir sem pensar nas consequências é comum para mim.","Conscienciosidade","Ponderação",1],[49,"Gosto de estar rodeada de pessoas.","Extroversão","Acolhimento",0],[50,"Facilmente faço amigos.","Extroversão","Acolhimento",0],[51,"Gosto de socializar.","Extroversão","Acolhimento",0],[52,"Sinto-me desconfortável em grandes grupos.","Extroversão","Acolhimento",1],[53,"Eu gosto de estar no centro das atenções.","Extroversão","Gregarismo",0],[54,"Gosto de participar de atividades sociais.","Extroversão","Gregarismo",0],[55,"Prefiro estar com outras pessoas do que sozinha.","Extroversão","Gregarismo",0],[56,"Não gosto de conhecer novas pessoas.","Extroversão","Gregarismo",1],[57,"Eu tomo a iniciativa em situações sociais.","Extroversão","Assertividade",0],[58,"Não tenho medo de falar em público.","Extroversão","Assertividade",0],[59,"Sou assertiva em expressar minhas opiniões.","Extroversão","Assertividade",0],[60,"Evito liderar grupos.","Extroversão","Assertividade",1],[61,"Eu sou uma pessoa enérgica.","Extroversão","Atividade",0],[62,"Gosto de estar ocupada.","Extroversão","Atividade",0],[63,"Tenho um ritmo de vida acelerado.","Extroversão","Atividade",0],[64,"Prefiro um ritmo de vida mais lento.","Extroversão","Atividade",1],[65,"Gosto de experimentar coisas novas.","Extroversão","Busca por Sensações",0],[66,"Procuro aventuras emocionantes.","Extroversão","Busca por Sensações",0],[67,"Desfruto de atividades estimulantes.","Extroversão","Busca por Sensações",0],[68,"Não gosto de desafios.","Extroversão","Busca por Sensações",1],[69,"Sinto-me frequentemente feliz e entusiasmada.","Extroversão","Emoções Positivas",0],[70,"Tenho uma perspectiva positiva da vida.","Extroversão","Emoções Positivas",0],[71,"Gosto de compartilhar minha alegria com os outros.","Extroversão","Emoções Positivas",0],[72,"Sou uma pessoa pessimista.","Extroversão","Emoções Positivas",1],[73,"Eu acredito que a maioria das pessoas é confiável.","Amabilidade","Confiança",0],[74,"Sinto que posso confiar nas pessoas.","Amabilidade","Confiança",0],[75,"Acho que a maioria das pessoas é honesta.","Amabilidade","Confiança",0],[76,"Desconfio das intenções dos outros.","Amabilidade","Confiança",1],[77,"Eu sou direta em minhas opiniões.","Amabilidade","Franqueza",0],[78,"Falo o que penso.","Amabilidade","Franqueza",0],[79,"Prefiro ser honesta do que diplomática.","Amabilidade","Franqueza",0],[80,"Eu escondo meus sentimentos.","Amabilidade","Franqueza",1],[81,"Gosto de ajudar os outros.","Amabilidade","Altruísmo",0],[82,"Tenho prazer em ser útil.","Amabilidade","Altruísmo",0],[83,"Sinto-me bem ao fazer algo por alguém.","Amabilidade","Altruísmo",0],[84,"Não me importo em ajudar os outros.","Amabilidade","Altruísmo",1],[85,"Eu tento evitar conflitos.","Amabilidade","Complacência",0],[86,"Eu sou uma pessoa pacífica.","Amabilidade","Complacência",0],[87,"Prefiro ceder a brigar.","Amabilidade","Complacência",0],[88,"Gosto de criar conflitos.","Amabilidade","Complacência",1],[89,"Eu não gosto de me gabar.","Amabilidade","Modéstia",0],[90,"Prefiro manter um perfil baixo.","Amabilidade","Modéstia",0],[91,"Não sou arrogante.","Amabilidade","Modéstia",0],[92,"Eu me gabo frequentemente.","Amabilidade","Modéstia",1],[93,"Eu me importo com os sentimentos dos outros.","Amabilidade","Sensibilidade",0],[94,"Sou sensível às necessidades dos outros.","Amabilidade","Sensibilidade",0],[95,"Tendo a ser empática.","Amabilidade","Sensibilidade",0],[96,"Não me preocupo com os sentimentos dos outros.","Amabilidade","Sensibilidade",1],[97,"Eu me preocupo facilmente.","Neuroticismo","Ansiedade",0],[98,"Fico nervosa com frequência.","Neuroticismo","Ansiedade",0],[99,"Sou uma pessoa ansiosa.","Neuroticismo","Ansiedade",0],[100,"Tenho facilidade em relaxar.","Neuroticismo","Ansiedade",1],[101,"Fico irritada facilmente.","Neuroticismo","Raiva",0],[102,"Tenho um pavio curto.","Neuroticismo","Raiva",0],[103,"Sinto raiva frequentemente.","Neuroticismo","Raiva",0],[104,"Raramente fico frustrada.","Neuroticismo","Raiva",1],[105,"Fico triste facilmente.","Neuroticismo","Depressão",0],[106,"Tenho tendência à melancolia.","Neuroticismo","Depressão",0],[107,"Sinto-me frequentemente deprimida.","Neuroticismo","Depressão",0],[108,"Raramente fico desanimada.","Neuroticismo","Depressão",1],[109,"Eu me preocupo com o que os outros pensam de mim.","Neuroticismo","Constrangimento",0],[110,"Sou sensível às críticas.","Neuroticismo","Constrangimento",0],[111,"Fico autoconsciente em situações sociais.","Neuroticismo","Constrangimento",0],[112,"Não me importo com a minha imagem.","Neuroticismo","Constrangimento",1],[113,"Eu ajo sem pensar.","Neuroticismo","Impulsividade",0],[114,"Tenho dificuldade em controlar meus impulsos.","Neuroticismo","Impulsividade",0],[115,"Fico impaciente facilmente.","Neuroticismo","Impulsividade",0],[116,"Costumo pensar antes de agir.","Neuroticismo","Impulsividade",1],[117,"Eu me sinto facilmente oprimida pelo estresse.","Neuroticismo","Vulnerabilidade ao Estresse",0],[118,"Tenho dificuldade em lidar com a pressão.","Neuroticismo","Vulnerabilidade ao Estresse",0],[119,"Sinto-me vulnerável em situações difíceis a ponto de querer fugir ou pensar em desistir delas.","Neuroticismo","Vulnerabilidade ao Estresse",0],[120,"Eu lido bem com situações difíceis já que elas fazem parte da vida e me abalam pouco.","Neuroticismo","Vulnerabilidade ao Estresse",1]];
+const KEY = 'diag_bigfive_v1';
+const FACETS = ["Fantasia","Estética","Sentimentos","Ideias","Ações Variadas","Valores","Competência","Ordem","Senso de Dever","Esforço e Realizações","Autodisciplina","Ponderação","Acolhimento","Gregarismo","Assertividade","Atividade","Busca por Sensações","Emoções Positivas","Confiança","Franqueza","Altruísmo","Complacência","Modéstia","Sensibilidade","Ansiedade","Raiva","Depressão","Constrangimento","Impulsividade","Vulnerabilidade ao Estresse"];
+const DOMAINS = {"Abertura":FACETS.slice(0,6),"Conscienciosidade":FACETS.slice(6,12),"Extroversão":FACETS.slice(12,18),"Amabilidade":FACETS.slice(18,24),"Neuroticismo":FACETS.slice(24,30)};
+const TEXTFIELDS = ['nome','email','prof','tempo','historia','expertise','tacito','horas','restricao','fat','aud','abandono','adia','comercial','desconto','contrato','energia','estado','estadotxt'];
+
+let store = {a:{}, order:null, t0:null, seq:[]};
+let DATA = null;
+try{ const raw=localStorage.getItem(KEY); if(raw) store=Object.assign(store,JSON.parse(raw)); }catch(e){}
+if(!store.t0) store.t0 = Date.now();
+
+function save(){
+  try{ localStorage.setItem(KEY, JSON.stringify(store)); document.getElementById('savemsg').textContent='Salvo neste navegador · '+new Date().toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'}); }
+  catch(e){ document.getElementById('savemsg').textContent='Não foi possível salvar automaticamente. Termine sem fechar esta aba.'; }
+}
+
+// ordem embaralhada, fixada na primeira visita
+function rng(seed){ let s=seed; return ()=>{ s=(s*1664525+1013904223)>>>0; return s/4294967296; }; }
+if(!store.order){
+  const seed = Math.floor(Math.random()*1e9);
+  const r = rng(seed);
+  const idx = ITEMS.map((_,i)=>i);
+  for(let i=idx.length-1;i>0;i--){ const j=Math.floor(r()*(i+1)); [idx[i],idx[j]]=[idx[j],idx[i]]; }
+  store.order = idx;
+}
+
+// render
+const cont = document.getElementById('items');
+const LABELS = ['Discordo totalmente','Discordo','Neutro','Concordo','Concordo totalmente'];
+let html = '';
+store.order.forEach((itemIdx, pos)=>{
+  if(pos % 10 === 0){
+    if(pos>0) html += '</div>';
+    html += '<div class="block"><div class="blockmark">'+(pos+1)+' – '+Math.min(pos+10,120)+' de 120</div>';
+    html += '<div class="blockends"><span>← discordo totalmente</span><span>concordo totalmente →</span></div>';
+  }
+  const it = ITEMS[itemIdx];
+  const id = it[0];
+  html += '<fieldset class="item" id="f'+id+'"><legend>';
+  html += '<div class="itemrow"><span class="itemnum">'+String(pos+1).padStart(3,'0')+'</span><span class="itemtext">'+it[1]+'</span></div></legend>';
+  html += '<div class="scale">';
+  for(let v=1;v<=5;v++){
+    html += '<span class="stop"><input type="radio" name="q'+id+'" value="'+v+'" aria-label="'+LABELS[v-1]+'"><span class="dot"></span></span>';
+  }
+  html += '</div></fieldset>';
+});
+html += '</div>';
+cont.innerHTML = html;
+
+// restaurar
+TEXTFIELDS.forEach(f=>{ const el=document.getElementById(f); if(el && store.a[f]!==undefined) el.value=store.a[f]; });
+if(store.a.estado==='Sim') document.getElementById('estadodetalhe').style.display='block';
+ITEMS.forEach(it=>{
+  const v = store.a['q'+it[0]];
+  if(v){ const el=document.querySelector('input[name="q'+it[0]+'"][value="'+v+'"]'); if(el){ el.checked=true; document.getElementById('f'+it[0]).classList.add('done'); } }
+});
+
+function answered(){ return ITEMS.filter(it=>store.a['q'+it[0]]).length; }
+function updateGauge(){
+  const n = answered();
+  const pct = Math.round(n/120*100);
+  document.getElementById('gnum').textContent = n+' / 120';
+  document.getElementById('gpct').textContent = pct+'%';
+  document.getElementById('gfill').style.width = pct+'%';
+  document.getElementById('gen').disabled = !(n===120 && document.getElementById('consent').checked);
+}
+
+cont.addEventListener('change', e=>{
+  if(e.target.type!=='radio') return;
+  const name = e.target.name;
+  store.a[name] = parseInt(e.target.value,10);
+  store.seq.push([name, parseInt(e.target.value,10), Date.now()]);
+  document.getElementById('f'+name.slice(1)).classList.add('done');
+  save(); updateGauge();
+});
+
+TEXTFIELDS.forEach(f=>{
+  const el=document.getElementById(f); if(!el) return;
+  el.addEventListener('input', ()=>{ store.a[f]=el.value; save(); });
+  el.addEventListener('change', ()=>{
+    store.a[f]=el.value; save();
+    if(f==='estado') document.getElementById('estadodetalhe').style.display = el.value==='Sim' ? 'block' : 'none';
+  });
+});
+
+document.getElementById('consent').addEventListener('change', updateGauge);
+
+// localizar pendências
+function showPending(){
+  const missing = [];
+  store.order.forEach((itemIdx,pos)=>{ const id=ITEMS[itemIdx][0]; if(!store.a['q'+id]) missing.push([pos+1,id]); });
+  const box = document.getElementById('pending');
+  if(!missing.length){ box.style.display='none'; return; }
+  box.style.display='block';
+  box.innerHTML = '<strong>Faltam '+missing.length+' afirmação'+(missing.length>1?'es':'')+'.</strong><br>Ir para: '+
+    missing.slice(0,12).map(m=>'<a data-go="'+m[1]+'">'+String(m[0]).padStart(3,'0')+'</a>').join('') +
+    (missing.length>12 ? '<span class="note">e mais '+(missing.length-12)+'</span>' : '');
+}
+document.getElementById('pending').addEventListener('click', e=>{
+  const id = e.target.getAttribute('data-go');
+  if(!id) return;
+  const el = document.getElementById('f'+id);
+  el.scrollIntoView({block:'center',behavior:'smooth'});
+  el.querySelector('input').focus();
+});
+
+// correção
+function score(){
+  const fac={}, raw={};
+  FACETS.forEach(f=>fac[f]=0);
+  ITEMS.forEach(it=>{
+    const [id,txt,dom,fct,rev] = it;
+    const v = store.a['q'+id];
+    raw[id]=v;
+    fac[fct] += rev ? (6-v) : v;
+  });
+  const dom={};
+  for(const d in DOMAINS) dom[d] = DOMAINS[d].reduce((s,f)=>s+fac[f],0);
+  return {fac,dom,raw};
+}
+const bandF = v => v<=9 ? 'baixa' : (v<=15 ? 'média' : 'alta');
+const bandD = v => v<=47 ? 'baixa' : (v<=83 ? 'média' : 'alta');
+
+function quality(raw){
+  const vals = Object.values(raw);
+  const ext = vals.filter(v=>v===1||v===5).length;
+  const neu = vals.filter(v=>v===3).length;
+  let run=1, maxrun=1;
+  const ordered = store.order.map(i=>raw[ITEMS[i][0]]);
+  for(let i=1;i<ordered.length;i++){ if(ordered[i]===ordered[i-1]){run++; maxrun=Math.max(maxrun,run);} else run=1; }
+  const mins = Math.round((Date.now()-store.t0)/60000);
+  return {ext:Math.round(ext/120*100), neu:Math.round(neu/120*100), maxrun, mins};
+}
+
+function pad(s,n){ s=String(s); return s + ' '.repeat(Math.max(0,n-s.length)); }
+
+function build(){
+  const {fac,dom,raw} = score();
+  const q = quality(raw);
+  const allSorted = FACETS.map(f=>[f,fac[f]]).sort((a,b)=>b[1]-a[1]);
+  const divs=[];
+  for(const d in DOMAINS){
+    const b=bandD(dom[d]);
+    DOMAINS[d].forEach(f=>{ const bf=bandF(fac[f]); if((b==='alta'&&bf==='baixa')||(b==='baixa'&&bf==='alta')) divs.push(f+' '+fac[f]+' ('+bf+') dentro de '+d+' ('+b+')'); });
+  }
+  DATA = {
+    nome:store.a.nome||'', email:store.a.email||'', prof:store.a.prof||'', tempo:store.a.tempo||'',
+    dom:dom, fac:fac,
+    ancorasAltas: allSorted.slice(0,3).map(x=>x[0]+' '+x[1]).join(' · '),
+    ancorasBaixas: allSorted.slice(-3).reverse().map(x=>x[0]+' '+x[1]).join(' · '),
+    divergencias: divs.join(' | ') || 'nenhuma',
+    teto: FACETS.filter(f=>fac[f]===20).join(', ') || 'nenhuma',
+    piso: FACETS.filter(f=>fac[f]===4).join(', ') || 'nenhuma',
+    minutos:q.mins, extremos:q.ext, neutros:q.neu, maiorSequencia:q.maxrun,
+    estado:store.a.estado||'', estadoTxt:store.a.estadotxt||'',
+    historia:store.a.historia||'', expertise:store.a.expertise||'', tacito:store.a.tacito||'',
+    horas:store.a.horas||'', restricao:store.a.restricao||'', fat:store.a.fat||'', aud:store.a.aud||'',
+    abandono:store.a.abandono||'', adia:store.a.adia||'', comercial:store.a.comercial||'',
+    desconto:store.a.desconto||'', contrato:store.a.contrato||'', energia:store.a.energia||'',
+    brutas: Array.from({length:120},(_,i)=>raw[i+1]).join(',')
+  };
+  const L=[];
+  L.push('DIAGNÓSTICO INICIAL — RESPOSTAS');
+  L.push('Gerado em '+new Date().toLocaleString('pt-BR'));
+  L.push('='.repeat(62));
+  L.push('');
+  L.push('## IDENTIFICAÇÃO');
+  L.push('Nome: '+(store.a.nome||'—'));
+  L.push('E-mail: '+(store.a.email||'—'));
+  L.push('Profissão e formação: '+(store.a.prof||'—'));
+  L.push('Tempo de atuação: '+(store.a.tempo||'—'));
+  L.push('');
+  L.push('## PONTUAÇÃO');
+  L.push('Faceta: 4–9 baixa · 10–15 média · 16–20 alta');
+  L.push('Traço: 24–47 baixa · 48–83 média · 84–120 alta');
+  L.push('');
+  for(const d in DOMAINS){
+    L.push(pad(d.toUpperCase(),34)+pad(dom[d],5)+bandD(dom[d]));
+    DOMAINS[d].forEach(f=>L.push('  '+pad(f,32)+pad(fac[f],5)+bandF(fac[f])));
+    L.push('');
+  }
+  const all = FACETS.map(f=>[f,fac[f]]).sort((a,b)=>b[1]-a[1]);
+  L.push('Facetas-âncora (3 mais altas): '+all.slice(0,3).map(x=>x[0]+' '+x[1]).join(' · '));
+  L.push('Facetas-âncora (3 mais baixas): '+all.slice(-3).reverse().map(x=>x[0]+' '+x[1]).join(' · '));
+  L.push('');
+  const div=[];
+  for(const d in DOMAINS){
+    const b=bandD(dom[d]);
+    DOMAINS[d].forEach(f=>{ const bf=bandF(fac[f]); if((b==='alta'&&bf==='baixa')||(b==='baixa'&&bf==='alta')) div.push(f+' '+fac[f]+' ('+bf+') dentro de '+d+' ('+b+')'); });
+  }
+  L.push('Divergências internas: '+(div.length?div.join(' | '):'nenhuma'));
+  L.push('');
+  L.push('## SINAIS DE QUALIDADE DO DADO');
+  L.push('Tempo de preenchimento: '+q.mins+' min');
+  L.push('Respostas nos extremos (1 ou 5): '+q.ext+'%');
+  L.push('Respostas neutras (3): '+q.neu+'%');
+  L.push('Maior sequência de respostas idênticas: '+q.maxrun);
+  L.push('Facetas no teto (20): '+(FACETS.filter(f=>fac[f]===20).join(', ')||'nenhuma'));
+  L.push('Facetas no piso (4): '+(FACETS.filter(f=>fac[f]===4).join(', ')||'nenhuma'));
+  L.push('Período atípico declarado: '+(store.a.estado||'não respondido')+(store.a.estadotxt?' — '+store.a.estadotxt:''));
+  L.push('');
+  L.push('## HISTÓRIA');
+  L.push(store.a.historia||'—');
+  L.push('');
+  L.push('## EXPERTISES');
+  L.push(store.a.expertise||'—');
+  L.push('');
+  L.push('### O que é automático');
+  L.push(store.a.tacito||'—');
+  L.push('');
+  L.push('## CONTEXTO');
+  const ctx=[['Horas por semana disponíveis','horas'],['Restrições de vida','restricao'],['Faturamento atual','fat'],['Audiência','aud'],['O que começou e não sustentou','abandono'],['O que adia sem saber por quê','adia'],['Parte do comercial que fica para depois','comercial'],['Desconto não solicitado','desconto'],['Contrato escrito','contrato'],['Energia — o que esvazia e o que flui','energia']];
+  ctx.forEach(([lab,k])=>{ L.push('### '+lab); L.push(store.a[k]||'—'); L.push(''); });
+  L.push('## RESPOSTAS BRUTAS (item original 1–120)');
+  const line=[];
+  for(let id=1;id<=120;id++) line.push(id+':'+raw[id]);
+  for(let i=0;i<line.length;i+=12) L.push(line.slice(i,i+12).join('  '));
+  return L.join('\n');
+}
+
+function setStatus(kind,msg){
+  const el=document.getElementById('sendstatus');
+  el.className='status '+kind; el.textContent=msg; el.style.display='block';
+}
+
+document.getElementById('gen').addEventListener('click', async ()=>{
+  showPending();
+  if(answered()<120) return;
+  const txt = build();
+  document.getElementById('out').value = txt;
+  document.getElementById('result').style.display='block';
+  document.getElementById('result').scrollIntoView({behavior:'smooth'});
+
+  if(!ENDPOINT){ setStatus('manual','Baixe o arquivo abaixo e envie por e-mail para sua consultora.'); return; }
+
+  const btn=document.getElementById('gen');
+  btn.disabled=true; btn.textContent='Enviando…';
+  setStatus('sending','Enviando suas respostas…');
+  try{
+    const res = await fetch(ENDPOINT,{
+      method:'POST',
+      headers:{'Content-Type':'text/plain;charset=utf-8'},
+      body: JSON.stringify({dados:DATA, relatorio:txt})
+    });
+    const j = await res.json();
+    if(j.ok){
+      setStatus('ok','Respostas enviadas. Sua consultora já recebeu — não precisa fazer mais nada.');
+      btn.textContent='Enviado';
+      try{ localStorage.removeItem(KEY); }catch(e){}
+    } else { throw new Error(j.erro||'falha'); }
+  }catch(err){
+    setStatus('fail','Não foi possível enviar automaticamente. Baixe o arquivo abaixo e envie por e-mail — suas respostas estão salvas.');
+    btn.disabled=false; btn.textContent='Tentar enviar de novo';
+  }
+});
+
+document.getElementById('dl').addEventListener('click', ()=>{
+  const nome=(store.a.nome||'diagnostico').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'');
+  const blob = new Blob([document.getElementById('out').value],{type:'text/plain;charset=utf-8'});
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(blob);
+  a.download='diagnostico-'+nome+'.txt';
+  a.click();
+});
+
+document.getElementById('cp').addEventListener('click', async ()=>{
+  const el=document.getElementById('out');
+  try{ await navigator.clipboard.writeText(el.value); document.getElementById('cp').textContent='Copiado'; }
+  catch(e){ el.select(); document.execCommand('copy'); document.getElementById('cp').textContent='Copiado'; }
+  setTimeout(()=>document.getElementById('cp').textContent='Copiar tudo',2000);
+});
+
+updateGauge(); save();
+</script>
+</body>
+</html>
